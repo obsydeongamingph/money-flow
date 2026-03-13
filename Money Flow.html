@@ -284,12 +284,15 @@
     <section id="view-tenants" class="view hidden">
       <div class="view-header">
         <h2>Tenants</h2>
-        <button class="btn btn-primary" onclick="openModal('modal-tenant')">+ Add Tenant</button>
+        <div style="display:flex;gap:.6rem;align-items:center">
+          <button class="btn btn-danger btn-sm hidden" id="ten-bulk-delete-btn" onclick="deleteSelectedTenants()">🗑️ Delete Selected</button>
+          <button class="btn btn-primary" onclick="openModal('modal-tenant')">+ Add Tenant</button>
+        </div>
       </div>
       <div class="card">
         <div class="table-wrap">
           <table id="table-tenants">
-            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Apartment</th><th>Start Date</th><th>Monthly Rent</th><th>Actions</th></tr></thead>
+            <thead><tr><th><input type="checkbox" id="ten-select-all" class="pay-row-cb"/></th><th>Name</th><th>Phone</th><th>Email</th><th>Apartment</th><th>Start Date</th><th>Monthly Rent</th><th>Actions</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>

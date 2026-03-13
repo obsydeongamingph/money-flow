@@ -616,15 +616,45 @@ document.querySelector('[onclick="openModal(\'modal-apt\')"]') && (window._reset
 });
 
 // ── TENANTS ──────────────────────────────────
+function updateTenBulkBtn() {
+  const checked = document.querySelectorAll('.ten-row-cb:checked').length;
+  const total   = document.querySelectorAll('.ten-row-cb').length;
+  const btn     = document.getElementById('ten-bulk-delete-btn');
+  const selAll  = document.getElementById('ten-select-all');
+  if (btn) btn.classList.toggle('hidden', checked === 0);
+  if (btn && checked > 0) btn.textContent = `🗑️ Delete (${checked})`;
+  if (selAll) selAll.indeterminate = checked > 0 && checked < total;
+  if (selAll) selAll.checked = total > 0 && checked === total;
+}
+
+function deleteSelectedTenants() {
+  const ids = [...document.querySelectorAll('.ten-row-cb:checked')].map(cb => Number(cb.dataset.id));
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} tenant(s)? This cannot be undone.`)) return;
+  let tenants = getAll('tenants');
+  const apts  = getAll('apartments');
+  ids.forEach(id => {
+    const t = tenants.find(x => x.id === id);
+    if (t) {
+      const apt = apts.find(a => a.id === t.apartmentId);
+      if (apt) { apt.status = 'vacant'; }
+    }
+  });
+  saveAll('apartments', apts);
+  saveAll('tenants', tenants.filter(t => !ids.includes(t.id)));
+  renderTenants();
+}
+
 function renderTenants() {
   const tenants = getAll('tenants');
   const apts    = getAll('apartments');
   const tbody   = document.querySelector('#table-tenants tbody');
   tbody.innerHTML = '';
-  if (!tenants.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No tenants yet.</td></tr>'; return; }
+  if (!tenants.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No tenants yet.</td></tr>'; return; }
   tenants.forEach(t => {
     const apt = apts.find(a => a.id === t.apartmentId);
     tbody.innerHTML += `<tr>
+      <td><input type="checkbox" class="ten-row-cb pay-row-cb" data-id="${t.id}" onchange="updateTenBulkBtn()"/></td>
       <td><strong>${t.name}</strong></td>
       <td>${t.phone || '—'}</td>
       <td>${t.email || '—'}</td>
@@ -637,6 +667,17 @@ function renderTenants() {
       </td>
     </tr>`;
   });
+
+  const selAll = document.getElementById('ten-select-all');
+  if (selAll) {
+    selAll.checked = false;
+    selAll.indeterminate = false;
+    selAll.onchange = () => {
+      document.querySelectorAll('.ten-row-cb').forEach(cb => cb.checked = selAll.checked);
+      updateTenBulkBtn();
+    };
+  }
+  updateTenBulkBtn();
 }
 
 function populateTenantAptSelect() {
