@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Money Flow — Finance Tracker</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236c63ff'/%3E%3Ccircle cx='11' cy='16' r='7' stroke='white' stroke-width='2.2' fill='none'/%3E%3Cline x1='11' y1='11' x2='11' y2='21' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='8' y1='14' x2='14' y2='14' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='8' y1='18' x2='14' y2='18' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M20 13 L26 16 L20 19' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cline x1='20' y1='16' x2='26' y2='16' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900;1000&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+<!-- Animated background -->
+<div id="bg-anim" aria-hidden="true">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+  <div class="orb orb4"></div>
+  <div class="orb orb5"></div>
+</div>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 28 28" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="11" cy="14" r="8" stroke="white" stroke-width="2.2" fill="rgba(255,255,255,0.12)"/>
+          <line x1="11" y1="8"  x2="11" y2="20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="7.5" y1="11.5" x2="14.5" y2="11.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="7.5" y1="16.5" x2="14.5" y2="16.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M20 11.5 L25 14 L20 16.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="20" y1="14" x2="25" y2="14" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="login-logo-name">Money Flow</div>
+        <div class="login-logo-sub">Finance Tracker</div>
+      </div>
+    </div>
+    <div class="login-title">Welcome Back</div>
+    <div class="login-subtitle">Sign in to your account</div>
+    <div id="login-error" class="login-error hidden">❌ Invalid username or password</div>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="login-username" placeholder="Enter username" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="login-pw-wrap">
+        <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password"/>
+        <button type="button" class="login-pw-toggle" id="login-pw-toggle" title="Show/hide password">👁️</button>
+      </div>
+    </div>
+    <div class="login-remember-row">
+      <label class="login-remember-label">
+        <input type="checkbox" id="login-remember"/>
+        <span>Remember username</span>
+      </label>
+    </div>
+    <button class="btn btn-primary btn-full login-btn" id="login-btn">🔓 Sign In</button>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay hidden" id="modal-change-pw">
+  <div class="modal-box modal-sm">
+    <div class="modal-head">
+      <span>🔑 Change Password</span>
+      <button class="modal-close" onclick="document.getElementById('modal-change-pw').classList.add('hidden')">✕</button>
+    </div>
+    <div id="changepw-error" class="login-error hidden"></div>
+    <div id="changepw-success" class="login-success hidden">✅ Password changed successfully!</div>
+    <div class="field">
+      <label>Current Password</label>
+      <input type="password" id="cp-current" placeholder="Current password"/>
+    </div>
+    <div class="field">
+      <label>New Password</label>
+      <input type="password" id="cp-new" placeholder="New password"/>
+    </div>
+    <div class="field">
+      <label>Confirm New Password</label>
+      <input type="password" id="cp-confirm" placeholder="Confirm new password"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-change-pw').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveChangePassword()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP ═══════════════════ -->
+<div id="app" class="hidden">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg viewBox="0 0 28 28" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Coin -->
+          <circle cx="11" cy="14" r="8" stroke="white" stroke-width="2.2" fill="rgba(255,255,255,0.12)"/>
+          <!-- Currency symbol (vertical + 2 horizontal bars) -->
+          <line x1="11" y1="8"  x2="11" y2="20" stroke="white" stroke-width="2"   stroke-linecap="round"/>
+          <line x1="7.5" y1="11.5" x2="14.5" y2="11.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="7.5" y1="16.5" x2="14.5" y2="16.5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <!-- Flow arrow -->
+          <path d="M20 11.5 L25 14 L20 16.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="20" y1="14" x2="25" y2="14" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="sidebar-logo-text">
+        <strong>Money Flow</strong>
+        <span>Finance Tracker</span>
+      </div>
+    </div>
+    <ul class="nav-links">
+      <div class="nav-section-label">Overview</div>
+      <li><a href="#" class="nav-link active" data-view="dashboard"><span class="nav-icon">📊</span> Dashboard</a></li>
+      <div class="nav-section-label">Management</div>
+      <li><a href="#" class="nav-link" data-view="apartments"><span class="nav-icon">🏠</span> Apartments</a></li>
+      <li><a href="#" class="nav-link" data-view="tenants"><span class="nav-icon">👥</span> Tenants</a></li>
+      <li><a href="#" class="nav-link" data-view="payments"><span class="nav-icon">💰</span> Payments</a></li>
+      <div class="nav-section-label">Finance</div>
+      <li><a href="#" class="nav-link" data-view="roi"><span class="nav-icon">📈</span> ROI Report</a></li>
+      <li><a href="#" class="nav-link" data-view="salary"><span class="nav-icon">💼</span> My Salary</a></li>
+      <li><a href="#" class="nav-link" data-view="ot"><span class="nav-icon">⏱️</span> OT Calculator</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-avatar">A</div>
+        <div>
+          <div class="sidebar-username">Admin</div>
+          <div class="sidebar-role">Owner</div>
+        </div>
+      </div>
+      <button id="change-pw-btn" class="btn-change-pw">🔑 Change Password</button>
+      <button id="logout-btn" class="btn-logout">🚪 Logout</button>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <div class="top-bar-title" id="page-title">Dashboard</div>
+        <div class="top-bar-breadcrumb">Money Flow · <span id="page-title-sub">Overview</span></div>
+      </div>
+      <div class="top-bar-right">
+        <span class="top-bar-date" id="today-date"></span>
+        <div class="avatar">A</div>
+      </div>
+    </header>
+
+    <!-- ── DASHBOARD ── -->
+    <section id="view-dashboard" class="view">
+
+      <!-- ── PLAYER HUD ── -->
+      <div class="game-hud">
+        <div class="game-hud-avatar">👑</div>
+        <div class="game-hud-info">
+          <div class="game-hud-name">Property Manager</div>
+          <div class="game-hud-level">LVL <span id="hud-level">1</span> <span class="game-hud-title" id="hud-title">Rookie Landlord</span></div>
+          <div class="game-xp-bar-wrap">
+            <div class="game-xp-bar" id="hud-xp-bar" style="width:0%"></div>
+            <span class="game-xp-label" id="hud-xp-label">0 XP</span>
+          </div>
+        </div>
+        <div class="game-hud-gold">
+          <span class="game-gold-icon">💰</span>
+          <div>
+            <div class="game-gold-label">Total Gold</div>
+            <div class="game-gold-value" id="hud-gold">₱0</div>
+          </div>
+        </div>
+        <div class="game-hud-date" id="today-date"></div>
+      </div>
+
+      <!-- ── STAT CARDS ── -->
+      <div class="game-stats-grid">
+        <div class="game-stat-card">
+          <div class="game-stat-icon">🏰</div>
+          <div class="game-stat-body">
+            <div class="game-stat-name">Territories</div>
+            <div class="game-stat-value" id="kpi-units">—</div>
+            <div class="game-stat-bar-wrap"><div class="game-stat-bar" id="bar-units"></div></div>
+            <div class="game-stat-sub" id="sub-units">Apartments owned</div>
+          </div>
+        </div>
+        <div class="game-stat-card green">
+          <div class="game-stat-icon">💎</div>
+          <div class="game-stat-body">
+            <div class="game-stat-name">Monthly Gold</div>
+            <div class="game-stat-value" id="kpi-income">—</div>
+            <div class="game-stat-bar-wrap"><div class="game-stat-bar" id="bar-income"></div></div>
+            <div class="game-stat-sub" id="sub-income">This month's rent</div>
+          </div>
+        </div>
+        <div class="game-stat-card orange">
+          <div class="game-stat-icon">⚠️</div>
+          <div class="game-stat-body">
+            <div class="game-stat-name">Active Quests</div>
+            <div class="game-stat-value" id="kpi-pending">—</div>
+            <div class="game-stat-bar-wrap"><div class="game-stat-bar" id="bar-pending"></div></div>
+            <div class="game-stat-sub" id="sub-pending">Pending payments</div>
+          </div>
+        </div>
+        <div class="game-stat-card blue">
+          <div class="game-stat-icon">⭐</div>
+          <div class="game-stat-body">
+            <div class="game-stat-name">Power Score</div>
+            <div class="game-stat-value" id="kpi-roi">—</div>
+            <div class="game-stat-bar-wrap"><div class="game-stat-bar" id="bar-roi"></div></div>
+            <div class="game-stat-sub">Overall ROI</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CHARTS ── -->
+      <div class="charts-row">
+        <div class="card game-chart-card">
+          <div class="game-chart-title">⚔️ Gold Raid — Last 6 Months</div>
+          <canvas id="chart-income"></canvas>
+        </div>
+        <div class="card game-chart-card">
+          <div class="game-chart-title">🗺️ Territory Control</div>
+          <canvas id="chart-occupancy"></canvas>
+        </div>
+      </div>
+
+      <!-- ── QUEST BOARD ── -->
+      <div class="card game-chart-card">
+        <div class="game-chart-title">📜 Quest Board — Recent Payments</div>
+        <div class="table-wrap">
+          <table id="table-recent-payments">
+            <thead><tr><th>Hero</th><th>Territory</th><th>Season</th><th>Bounty</th><th>Status</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── APARTMENTS ── -->
+    <section id="view-apartments" class="view hidden">
+      <div class="view-header">
+        <h2>Apartments</h2>
+        <button class="btn btn-primary" onclick="openModal('modal-apt')">+ Add Apartment</button>
+      </div>
+      <div id="apt-grid" class="apt-grid"></div>
+    </section>
+
+    <!-- ── TENANTS ── -->
+    <section id="view-tenants" class="view hidden">
+      <div class="view-header">
+        <h2>Tenants</h2>
+        <button class="btn btn-primary" onclick="openModal('modal-tenant')">+ Add Tenant</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table id="table-tenants">
+            <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Apartment</th><th>Start Date</th><th>Monthly Rent</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── PAYMENTS ── -->
+    <section id="view-payments" class="view hidden">
+      <div class="view-header">
+        <h2>Payment Log</h2>
+        <button class="btn btn-primary" onclick="openModal('modal-payment')">+ Log Payment</button>
+      </div>
+      <div class="filter-bar">
+        <select id="filter-month">
+          <option value="">All Months</option>
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option>
+          <option value="9">September</option><option value="10">October</option>
+          <option value="11">November</option><option value="12">December</option>
+        </select>
+        <select id="filter-year">
+          <option value="">All Years</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+        </select>
+        <select id="filter-status">
+          <option value="">All Status</option>
+          <option value="paid">Paid</option>
+          <option value="pending">Pending</option>
+          <option value="late">Late</option>
+        </select>
+        <button class="btn btn-secondary" onclick="renderPayments()">Filter</button>
+        <button class="btn btn-danger" id="pay-bulk-delete-btn" style="display:none" onclick="deleteSelectedPayments()">🗑️ Delete Selected (<span id="pay-selected-count">0</span>)</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table id="table-payments">
+            <thead><tr><th><input type="checkbox" id="pay-select-all" title="Select all"/></th><th>Tenant</th><th>Apartment</th><th>Month/Year</th><th>Amount</th><th>Due Date</th><th>Paid Date</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ROI ── -->
+    <section id="view-roi" class="view hidden">
+      <div class="view-header"><h2>ROI Report</h2></div>
+      <div class="kpi-grid" id="roi-kpis"></div>
+      <div class="charts-row">
+        <div class="card chart-card wide">
+          <div class="card-header">Investment vs Total Collected per Apartment</div>
+          <canvas id="chart-roi"></canvas>
+        </div>
+      </div>
+      <div class="card" style="margin-top:1.5rem">
+        <div class="card-header">Per-Apartment ROI Breakdown</div>
+        <div class="table-wrap">
+          <table id="table-roi">
+            <thead><tr><th>Apartment</th><th>Type</th><th>Investment</th><th>Total Collected</th><th>ROI %</th><th>Payback Est.</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SALARY ── -->
+    <section id="view-salary" class="view hidden">
+      <div class="view-header">
+        <h2>My Salary</h2>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-secondary" onclick="openModal('modal-upload-slip')">📷 Upload Slip</button>
+          <button class="btn btn-primary" onclick="openModal('modal-my-salary')">+ Log Salary</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="salary-kpis"></div>
+
+      <div class="filter-bar">
+        <select id="sal-filter-month">
+          <option value="">All Months</option>
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option>
+          <option value="9">September</option><option value="10">October</option>
+          <option value="11">November</option><option value="12">December</option>
+        </select>
+        <select id="sal-filter-year">
+          <option value="">All Years</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+        </select>
+        <select id="sal-filter-status">
+          <option value="">All Status</option>
+          <option value="received">Received</option>
+          <option value="pending">Pending</option>
+        </select>
+        <button class="btn btn-secondary" onclick="renderSalary()">Filter</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table id="table-my-salary">
+            <thead><tr><th>Month / Year</th><th>Basic</th><th>Housing</th><th>Shift</th><th>Transport</th><th>Earnings Total</th><th>Absent Ded.</th><th>Leave Adv.</th><th>OT Ded.</th><th>Shift Ded.</th><th>Other Ded.</th><th>Net Take-Home</th><th>Date Received</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── OT CALCULATOR ── -->
+    <section id="view-ot" class="view hidden">
+      <div class="view-header">
+        <h2>OT Calculator</h2>
+      </div>
+
+      <div class="ot-calculator-wrap">
+
+        <!-- Inputs -->
+        <div class="card ot-input-card">
+          <div class="ot-card-title">📥 Enter Details</div>
+          <div class="form-row">
+            <div class="field">
+              <label>Basic Salary (QAR)</label>
+              <input type="number" id="ot-basic" placeholder="e.g. 5000" value="0" oninput="calcOT()"/>
+            </div>
+            <div class="field">
+              <label>OT Hours</label>
+              <input type="number" id="ot-hours" placeholder="e.g. 10" value="0" step="0.5" oninput="calcOT()"/>
+            </div>
+          </div>
+          <div class="ot-constants-row">
+            <div class="ot-const-chip">OT Multiplier <strong>× 1.25</strong></div>
+            <div class="ot-const-chip">Monthly→Hourly <strong>× 0.0058333</strong></div>
+          </div>
+          <div class="ot-grade-row">
+            <span class="ot-grade-label">Salary Grade</span>
+            <button type="button" class="ot-grade-btn" onclick="setOTGrade(11950, this)">SG 110</button>
+            <button type="button" class="ot-grade-btn" onclick="setOTGrade(7550, this)">SG 108</button>
+          </div>
+          <div class="ot-log-save-row">
+            <div class="form-row" style="margin-bottom:0">
+              <div class="field">
+                <label>Month</label>
+                <select id="ot-month">
+                  <option value="1">January</option><option value="2">February</option>
+                  <option value="3">March</option><option value="4">April</option>
+                  <option value="5">May</option><option value="6">June</option>
+                  <option value="7">July</option><option value="8">August</option>
+                  <option value="9">September</option><option value="10">October</option>
+                  <option value="11">November</option><option value="12">December</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Year</label>
+                <input type="number" id="ot-year" value="2026" min="2020" max="2030"/>
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary btn-full" onclick="saveOTLog()">💾 Save to Monthly Log</button>
+          </div>
+        </div>
+
+        <!-- Breakdown -->
+        <div class="card ot-breakdown-card" id="ot-breakdown-card">
+          <div class="ot-card-title">🧮 OT Breakdown</div>
+          <div class="ot-breakdown-list">
+
+            <div class="ot-step">
+              <span class="ot-step-label">Basic Salary</span>
+              <span class="ot-step-value" id="ot-bd-basic">QAR 0</span>
+            </div>
+            <div class="ot-step-op">× 0.0058333 <span class="ot-step-tag">Monthly → Hourly</span></div>
+
+            <div class="ot-step ot-step-result">
+              <span class="ot-step-label">Hourly Rate</span>
+              <span class="ot-step-value" id="ot-bd-hourly">QAR 0.00</span>
+            </div>
+            <div class="ot-step-op">× 1.25 <span class="ot-step-tag">OT Multiplier</span></div>
+
+            <div class="ot-step ot-step-result">
+              <span class="ot-step-label">OT Hourly Rate</span>
+              <span class="ot-step-value" id="ot-bd-ot-hourly">QAR 0.00</span>
+            </div>
+            <div class="ot-step-op">× <span id="ot-bd-hours-label">0</span> hrs <span class="ot-step-tag">OT Hours</span></div>
+
+            <div class="ot-step ot-total-row">
+              <span class="ot-step-label">Total OT Pay</span>
+              <span class="ot-step-value ot-total-value" id="ot-bd-total">QAR 0.00</span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- OT Log KPIs + Table -->
+      <div class="kpi-grid" id="ot-log-kpis" style="margin-top:1.5rem"></div>
+
+      <div class="card" style="margin-top:1rem">
+        <div class="table-wrap">
+          <table id="table-ot-logs">
+            <thead><tr>
+              <th>Month / Year</th>
+              <th>Basic Salary</th>
+              <th>OT Hours</th>
+              <th>OT Pay</th>
+              <th>Addendums</th>
+              <th>Total OT</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<!-- ═══════════════════ OT ADDENDUM MODAL ═══════════════════ -->
+<div id="modal-ot-addendum" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="ot-addendum-title">OT Addendum</span>
+      <button class="modal-close" onclick="closeModal('modal-ot-addendum')">✕</button>
+    </div>
+    <input type="hidden" id="ot-addendum-log-id"/>
+
+    <div class="salary-breakdown" style="margin-bottom:1rem">
+      <div class="salary-breakdown-title">Base OT This Month</div>
+      <div class="ot-step" style="margin-top:.5rem">
+        <span class="ot-step-label">Original OT Pay</span>
+        <span class="ot-step-value" id="ot-addendum-base">QAR 0.00</span>
+      </div>
+    </div>
+
+    <!-- Existing addendums list -->
+    <div id="ot-addendum-existing" style="margin-bottom:1rem"></div>
+
+    <!-- New addendum entry -->
+    <div class="salary-breakdown">
+      <div class="salary-breakdown-title">➕ New Addendum</div>
+      <div class="form-row" style="margin-top:.5rem">
+        <div class="field">
+          <label>Extra OT Hours</label>
+          <input type="number" id="ot-add-hours" value="0" step="0.5" oninput="calcAddendumPreview()"/>
+        </div>
+        <div class="field">
+          <label>Calculated Pay</label>
+          <input type="text" id="ot-add-preview" value="QAR 0.00" readonly style="background:rgba(255,255,255,0.4);font-weight:800"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <input type="text" id="ot-add-notes" placeholder="e.g. Weekend duty, Holiday OT..."/>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:1rem">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-ot-addendum')">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="saveAddendum()">Save Addendum</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ 3D MODAL ═══════════════════ -->
+<div id="modal-3d" class="modal-overlay hidden">
+  <div class="modal-box modal-3d-box">
+    <div class="modal-head">
+      <span id="modal-3d-title">3D Apartment View</span>
+      <button class="modal-close" onclick="close3D()">✕</button>
+    </div>
+    <div class="viewer-3d-wrap">
+      <canvas id="canvas-3d"></canvas>
+      <div class="viewer-legend" id="viewer-legend"></div>
+      <div class="viewer-hint">🖱 Drag to rotate • Scroll to zoom</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APARTMENT MODAL ═══════════════════ -->
+<div id="modal-apt" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="modal-apt-title">Add Apartment</span>
+      <button class="modal-close" onclick="closeModal('modal-apt')">✕</button>
+    </div>
+    <form id="form-apt">
+      <input type="hidden" id="apt-id"/>
+      <div class="form-row">
+        <div class="field"><label>Unit Name / No.</label><input type="text" id="apt-name" placeholder="e.g. Unit 101" required/></div>
+        <div class="field"><label>Floor</label><input type="text" id="apt-floor" placeholder="e.g. 1st Floor"/></div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Type</label>
+          <select id="apt-type">
+            <option value="small">Small (Studio/1BR)</option>
+            <option value="medium">Medium (2BR)</option>
+            <option value="large">Large (3BR+)</option>
+          </select>
+        </div>
+        <div class="field"><label>Area (sqm)</label><input type="number" id="apt-area" placeholder="e.g. 35"/></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Monthly Rent (₱)</label><input type="number" id="apt-rent" placeholder="e.g. 8000" required/></div>
+        <div class="field"><label>Investment Cost (₱)</label><input type="number" id="apt-invest" placeholder="e.g. 500000"/></div>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="apt-notes" rows="2" placeholder="Optional notes..."></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-apt')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ TENANT MODAL ═══════════════════ -->
+<div id="modal-tenant" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="modal-tenant-title">Add Tenant</span>
+      <button class="modal-close" onclick="closeModal('modal-tenant')">✕</button>
+    </div>
+    <form id="form-tenant">
+      <input type="hidden" id="tenant-id"/>
+      <div class="form-row">
+        <div class="field"><label>Full Name</label><input type="text" id="tenant-name" placeholder="Juan Dela Cruz" required/></div>
+        <div class="field"><label>Phone</label><input type="text" id="tenant-phone" placeholder="09xx-xxx-xxxx"/></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Email</label><input type="email" id="tenant-email" placeholder="juan@email.com"/></div>
+        <div class="field">
+          <label>Apartment</label>
+          <select id="tenant-apt" required></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Start Date</label><input type="date" id="tenant-start"/></div>
+        <div class="field"><label>Monthly Rent (₱)</label><input type="number" id="tenant-rent" placeholder="Auto-filled"/></div>
+      </div>
+      <div class="field"><label>Security Deposit (₱)</label><input type="number" id="tenant-deposit" placeholder="e.g. 16000"/></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-tenant')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAYMENT MODAL ═══════════════════ -->
+<div id="modal-payment" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="modal-payment-title">Log Payment</span>
+      <button class="modal-close" onclick="closeModal('modal-payment')">✕</button>
+    </div>
+    <form id="form-payment">
+      <input type="hidden" id="pay-id"/>
+      <div class="form-row">
+        <div class="field">
+          <label>Tenant</label>
+          <select id="pay-tenant" required onchange="fillPaymentRent()"></select>
+        </div>
+        <div class="field"><label>Amount (₱)</label><input type="number" id="pay-amount" required/></div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Month</label>
+          <select id="pay-month">
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div class="field"><label>Year</label><input type="number" id="pay-year" value="2026" min="2020" max="2030"/></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Due Date</label><input type="date" id="pay-due"/></div>
+        <div class="field"><label>Paid Date</label><input type="date" id="pay-paid-date"/></div>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="pay-status">
+          <option value="paid">Paid</option>
+          <option value="pending">Pending</option>
+          <option value="late">Late</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-payment')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ CONFIRM MODAL ═══════════════════ -->
+<div id="modal-confirm" class="modal-overlay hidden">
+  <div class="modal-box modal-sm">
+    <div class="modal-head">
+      <span>Confirm Delete</span>
+      <button class="modal-close" onclick="closeModal('modal-confirm')">✕</button>
+    </div>
+    <p style="padding:1rem 0">Are you sure you want to delete this record? This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modal-confirm')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MY SALARY MODAL ═══════════════════ -->
+<div id="modal-my-salary" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="modal-my-salary-title">Log My Salary</span>
+      <button class="modal-close" onclick="closeModal('modal-my-salary')">✕</button>
+    </div>
+    <form id="form-my-salary">
+      <input type="hidden" id="msal-id"/>
+      <div class="form-row">
+        <div class="field">
+          <label>Month</label>
+          <select id="msal-month">
+            <option value="1">January</option><option value="2">February</option>
+            <option value="3">March</option><option value="4">April</option>
+            <option value="5">May</option><option value="6">June</option>
+            <option value="7">July</option><option value="8">August</option>
+            <option value="9">September</option><option value="10">October</option>
+            <option value="11">November</option><option value="12">December</option>
+          </select>
+        </div>
+        <div class="field"><label>Year</label><input type="number" id="msal-year" value="2026" min="2020" max="2030"/></div>
+      </div>
+
+      <div class="field" style="margin-bottom:.75rem">
+        <label>Salary Grade</label>
+        <select id="msal-grade" onchange="applySalaryGrade()">
+          <option value="">— Select Grade —</option>
+          <option value="110">Grade 110 — QAR 11,950</option>
+          <option value="108">Grade 108 — QAR 7,550</option>
+        </select>
+      </div>
+
+      <div class="salary-breakdown">
+        <div class="salary-breakdown-title">Salary Breakdown</div>
+        <div class="form-row">
+          <div class="field"><label>Basic Salary (QAR)</label><input type="number" id="msal-basic" placeholder="0" value="0" oninput="calcSalaryTotal()"/></div>
+          <div class="field"><label>Housing Allowance (QAR)</label><input type="number" id="msal-housing" placeholder="0" value="0" oninput="calcSalaryTotal()"/></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Shift Allowance (QAR)</label><input type="number" id="msal-shift" placeholder="0" value="0" oninput="calcSalaryTotal()"/></div>
+          <div class="field"><label>Transportation Allowance (QAR)</label><input type="number" id="msal-transport" placeholder="0" value="0" oninput="calcSalaryTotal()"/></div>
+        </div>
+        <div class="salary-total-row">
+          <span>Earnings Total</span>
+          <span id="msal-total-display">QAR 0</span>
+          <input type="hidden" id="msal-gross"/>
+        </div>
+      </div>
+
+      <div class="salary-breakdown" style="margin-bottom:.75rem">
+        <div class="salary-breakdown-title">Deductions Breakdown</div>
+        <div class="form-row">
+          <div class="field"><label>Absent Hours Deduction (QAR)</label><input type="number" id="msal-absent" value="0" oninput="calcSalaryTotal()"/></div>
+          <div class="field"><label>Leave Advance Deduction (QAR)</label><input type="number" id="msal-leave" value="0" oninput="calcSalaryTotal()"/></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Regular OT Deduction (QAR)</label><input type="number" id="msal-ot" value="0" oninput="calcSalaryTotal()"/></div>
+          <div class="field"><label>Shift Allowance Deduction (QAR)</label><input type="number" id="msal-shiftded" value="0" oninput="calcSalaryTotal()"/></div>
+        </div>
+        <div class="field"><label>Other Deductions (QAR)</label><input type="number" id="msal-deductions" value="0" oninput="calcSalaryTotal()"/></div>
+        <div class="salary-total-row" style="font-size:.85rem">
+          <span>Total Deductions</span>
+          <span id="msal-deduct-total-display">QAR 0</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Date Received</label><input type="date" id="msal-date"/></div>
+        <div class="field"></div>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="msal-status">
+          <option value="received">Received</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="msal-notes" rows="2" placeholder="Optional notes..."></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-my-salary')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ UPLOAD SLIP MODAL ═══════════════════ -->
+<div id="modal-upload-slip" class="modal-overlay hidden">
+  <div class="modal-box modal-upload-box">
+    <div class="modal-head">
+      <span>📷 Read Salary Slip</span>
+      <button class="modal-close" onclick="closeUploadSlip()">✕</button>
+    </div>
+
+    <!-- Step 1: Upload -->
+    <div id="slip-step-upload">
+      <div class="ocr-privacy-note">🔒 Image is read locally on your device and deleted immediately after — never stored or uploaded anywhere.</div>
+      <div class="upload-drop-zone" id="upload-drop-zone" onclick="document.getElementById('slip-file-input').click()">
+        <div class="upload-drop-icon">📄</div>
+        <div class="upload-drop-text">Click or drag & drop your salary slip</div>
+        <div class="upload-drop-sub">Supports JPG, PNG, PDF screenshot</div>
+        <input type="file" id="slip-file-input" accept="image/*" style="display:none" onchange="onSlipFileSelected(event)"/>
+      </div>
+      <div id="slip-preview-wrap" class="hidden">
+        <img id="slip-preview-img" class="slip-preview-img" alt="Salary Slip Preview"/>
+        <button class="btn btn-primary btn-full" style="margin-top:1rem" onclick="runOCR()">🔍 Read Salary Slip</button>
+        <button class="btn btn-secondary btn-full" style="margin-top:.5rem" onclick="resetUpload()">Choose Different File</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Processing -->
+    <div id="slip-step-processing" class="hidden">
+      <div class="ocr-processing">
+        <div class="ocr-spinner"></div>
+        <div class="ocr-status" id="ocr-status">Initializing OCR...</div>
+        <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocr-progress-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- Step 3: Review extracted values -->
+    <div id="slip-step-review" class="hidden">
+      <div class="ocr-success-banner">✅ Salary slip read. Image deleted from memory — only the values below are kept.</div>
+      <div id="ocr-currency-banner" class="hidden"></div>
+      <div class="salary-breakdown" style="margin-top:1rem">
+        <div class="salary-breakdown-title">Extracted Values — Edit if needed</div>
+        <div class="form-row">
+          <div class="field"><label>Month</label>
+            <select id="ocr-month">
+              <option value="1">January</option><option value="2">February</option>
+              <option value="3">March</option><option value="4">April</option>
+              <option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option>
+              <option value="9">September</option><option value="10">October</option>
+              <option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="field"><label>Year</label><input type="number" id="ocr-year" value="2026" min="2020" max="2030"/></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Basic Salary (QAR)</label><input type="number" id="ocr-basic" value="0" oninput="calcOCRTotal()"/></div>
+          <div class="field"><label>Housing Allowance (QAR)</label><input type="number" id="ocr-housing" value="0" oninput="calcOCRTotal()"/></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Shift Allowance (QAR)</label><input type="number" id="ocr-shift" value="0" oninput="calcOCRTotal()"/></div>
+          <div class="field"><label>Transportation Allowance (QAR)</label><input type="number" id="ocr-transport" value="0" oninput="calcOCRTotal()"/></div>
+        </div>
+        <div class="salary-breakdown" style="margin-bottom:.5rem">
+          <div class="salary-breakdown-title">Deductions Breakdown</div>
+          <div class="form-row">
+            <div class="field"><label>Absent Hours Deduction (QAR)</label><input type="number" id="ocr-absent" value="0" oninput="calcOCRTotal()"/></div>
+            <div class="field"><label>Leave Advance Deduction (QAR)</label><input type="number" id="ocr-leave" value="0" oninput="calcOCRTotal()"/></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Regular OT Deduction (QAR)</label><input type="number" id="ocr-ot" value="0" oninput="calcOCRTotal()"/></div>
+            <div class="field"><label>Shift Allowance Deduction (QAR)</label><input type="number" id="ocr-shiftded" value="0" oninput="calcOCRTotal()"/></div>
+          </div>
+          <div class="field"><label>Other Deductions (QAR)</label><input type="number" id="ocr-deductions" value="0" oninput="calcOCRTotal()"/></div>
+          <div class="salary-total-row" style="font-size:.85rem">
+            <span>Total Deductions</span>
+            <span id="ocr-deduct-total-display">QAR 0</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Date on Slip</label><input type="date" id="ocr-date"/></div>
+          <div class="field"></div>
+        </div>
+        <div class="salary-total-row">
+          <span>Earnings Total</span>
+          <span id="ocr-total-display">QAR 0</span>
+        </div>
+      </div>
+      <div id="ocr-raw-text-wrap" style="margin-top:.75rem">
+        <details>
+          <summary style="cursor:pointer;font-size:.8rem;color:var(--text-muted);font-weight:600">View raw OCR text</summary>
+          <pre id="ocr-raw-text" class="ocr-raw-text"></pre>
+        </details>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="resetUpload()">Try Again</button>
+        <button class="btn btn-primary" onclick="applyOCRValues()">✅ Log This Salary</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
