@@ -167,9 +167,9 @@ function clearSession(){ localStorage.removeItem(SESSION_KEY); }
 function showApp(user) {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
-  // update sidebar username/avatar
-  document.querySelectorAll('.sidebar-username').forEach(el => el.textContent = user.username);
-  document.querySelectorAll('.sidebar-avatar, .avatar').forEach(el => el.textContent = user.username[0].toUpperCase());
+  const profile = JSON.parse(localStorage.getItem('rp_profile') || '{}');
+  if (!profile.name) profile.name = user.username;
+  applyProfile(profile);
 }
 
 function showLogin() {
@@ -203,6 +203,79 @@ function doLogin() {
   showApp(user);
   navigateTo('dashboard');
 }
+
+// ── PROFILE ──────────────────────────────────
+const AVATAR_CATEGORIES = [
+  { label: '⚔️ Vikings & Warriors', avatars: ['⚔️','🛡️','🪖','🏹','🗡️','🪃','🔱','🏋️'] },
+  { label: '👽 Aliens & Space',      avatars: ['👽','🛸','🤖','👾','🚀','👨‍🚀','🌌','🪐'] },
+  { label: '🧙 Fantasy & Magic',     avatars: ['🧙‍♂️','🧝‍♂️','🧛‍♂️','🐉','🧜‍♂️','🧚','🔮','🪄'] },
+  { label: '🦁 Wild Animals',        avatars: ['🦁','🐯','🦊','🐺','🦅','🐻','🦈','🦋'] },
+  { label: '🏴‍☠️ Pirates & Sailors',  avatars: ['🏴‍☠️','⚓','🦜','🗺️','💎','🧭','⛵','🪝'] },
+  { label: '👑 Royals & Nobles',     avatars: ['👑','🤴','🧝‍♀️','🏰','💫','🎖️','🏆','💍'] },
+  { label: '🌊 Mythical Creatures',  avatars: ['🐲','🦄','🦕','🦖','🐳','🦝','🐉','🦋'] },
+  { label: '🎭 Misc Cool',           avatars: ['🎃','💀','🤡','👹','👺','🎯','🃏','🎲'] },
+];
+
+function openProfile() {
+  const profile = JSON.parse(localStorage.getItem('rp_profile') || '{}');
+  document.getElementById('profile-name').value = profile.name || '';
+  const currentAvatar = profile.avatar || '👑';
+  document.getElementById('profile-avatar-preview').textContent = currentAvatar;
+
+  // Build picker
+  const picker = document.getElementById('profile-avatar-picker');
+  picker.innerHTML = '';
+  AVATAR_CATEGORIES.forEach(cat => {
+    const catLabel = document.createElement('div');
+    catLabel.className = 'avatar-cat-label';
+    catLabel.textContent = cat.label;
+    picker.appendChild(catLabel);
+
+    const grid = document.createElement('div');
+    grid.className = 'avatar-grid';
+    cat.avatars.forEach(emoji => {
+      const btn = document.createElement('button');
+      btn.className = 'avatar-option' + (emoji === currentAvatar ? ' avatar-option-active' : '');
+      btn.textContent = emoji;
+      btn.type = 'button';
+      btn.onclick = () => {
+        document.querySelectorAll('.avatar-option').forEach(b => b.classList.remove('avatar-option-active'));
+        btn.classList.add('avatar-option-active');
+        document.getElementById('profile-avatar-preview').textContent = emoji;
+      };
+      grid.appendChild(btn);
+    });
+    picker.appendChild(grid);
+  });
+
+  document.getElementById('modal-profile').classList.remove('hidden');
+}
+
+function saveProfile() {
+  const name   = document.getElementById('profile-name').value.trim();
+  const avatar = document.getElementById('profile-avatar-preview').textContent;
+  const profile = { name, avatar };
+  localStorage.setItem('rp_profile', JSON.stringify(profile));
+  applyProfile(profile);
+  document.getElementById('modal-profile').classList.add('hidden');
+}
+
+function applyProfile(profile) {
+  const avatar   = profile.avatar || '👑';
+  const name     = profile.name  || 'Admin';
+  const initial  = name[0].toUpperCase();
+
+  // Sidebar
+  const sidebarAvatar = document.getElementById('sidebar-avatar');
+  const sidebarName   = document.getElementById('sidebar-username');
+  if (sidebarAvatar) sidebarAvatar.textContent = avatar;
+  if (sidebarName)   sidebarName.textContent   = name;
+
+  // Top-bar avatar
+  document.querySelectorAll('.avatar').forEach(el => el.textContent = avatar);
+}
+
+document.getElementById('open-profile-btn').addEventListener('click', openProfile);
 
 function saveChangePassword() {
   const errEl = document.getElementById('changepw-error');

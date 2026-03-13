@@ -66,6 +66,32 @@
   </div>
 </div>
 
+<!-- Profile Settings Modal -->
+<div class="modal-overlay hidden" id="modal-profile">
+  <div class="modal-box" style="width:580px">
+    <div class="modal-head">
+      <span>🎮 Profile Settings</span>
+      <button class="modal-close" onclick="document.getElementById('modal-profile').classList.add('hidden')">✕</button>
+    </div>
+    <div class="field">
+      <label>Display Name</label>
+      <input type="text" id="profile-name" placeholder="Enter your name"/>
+    </div>
+    <div class="profile-avatar-preview-row">
+      <div class="profile-avatar-preview" id="profile-avatar-preview">👑</div>
+      <div>
+        <div class="profile-preview-label">Selected Avatar</div>
+        <div class="profile-preview-sub">Pick one from the collection below</div>
+      </div>
+    </div>
+    <div id="profile-avatar-picker"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-profile').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProfile()">💾 Save Profile</button>
+    </div>
+  </div>
+</div>
+
 <!-- Change Password Modal -->
 <div class="modal-overlay hidden" id="modal-change-pw">
   <div class="modal-box modal-sm">
@@ -131,11 +157,11 @@
       <li><a href="#" class="nav-link" data-view="ot"><span class="nav-icon">⏱️</span> OT Calculator</a></li>
     </ul>
     <div class="sidebar-footer">
-      <div class="sidebar-user">
-        <div class="sidebar-avatar">A</div>
+      <div class="sidebar-user" id="open-profile-btn" title="Edit Profile" style="cursor:pointer">
+        <div class="sidebar-avatar" id="sidebar-avatar">👑</div>
         <div>
-          <div class="sidebar-username">Admin</div>
-          <div class="sidebar-role">Owner</div>
+          <div class="sidebar-username" id="sidebar-username">Admin</div>
+          <div class="sidebar-role">Owner · ✏️ Edit Profile</div>
         </div>
       </div>
       <button id="change-pw-btn" class="btn-change-pw">🔑 Change Password</button>
