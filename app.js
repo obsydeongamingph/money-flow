@@ -156,6 +156,16 @@ function getAll(key)     { return db(key) || []; }
 function saveAll(key, a) { db(key, a); }
 function nextId(key)     { const a = getAll(key); return a.length ? Math.max(...a.map(x=>x.id)) + 1 : 1; }
 
+// ── MOBILE SIDEBAR ───────────────────────────
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('active');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('active');
+}
+
 // ── AUTH ─────────────────────────────────────
 const SESSION_KEY = 'rp_session';
 const REMEMBER_KEY = 'rp_remember';
@@ -357,7 +367,7 @@ function navigateTo(view) {
 }
 
 document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', e => { e.preventDefault(); navigateTo(link.dataset.view); });
+  link.addEventListener('click', e => { e.preventDefault(); navigateTo(link.dataset.view); closeSidebar(); });
 });
 
 // ── MODALS ───────────────────────────────────

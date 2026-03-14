@@ -169,10 +169,14 @@
     </div>
   </nav>
 
+  <!-- Sidebar overlay for mobile -->
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
   <!-- Main -->
   <main class="main-content">
     <header class="top-bar">
       <div class="top-bar-left">
+        <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()">☰</button>
         <div class="top-bar-title" id="page-title">Dashboard</div>
         <div class="top-bar-breadcrumb">Money Flow · <span id="page-title-sub">Overview</span></div>
       </div>

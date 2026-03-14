@@ -1056,3 +1056,100 @@ tbody tr:nth-child(even) td { background:rgba(108,99,255,0.06); }
   color: #c4b5fd; transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(108,99,255,0.3);
 }
+
+/* ═══════════════ MOBILE RESPONSIVE ═══════════════ */
+
+/* Hamburger button — hidden on desktop */
+.hamburger-btn {
+  display: none;
+  background: none; border: none; color: #a78bfa;
+  font-size: 1.5rem; cursor: pointer; padding: .2rem .5rem;
+  line-height: 1; margin-right: .5rem;
+}
+
+/* Sidebar overlay — hidden by default */
+#sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 49;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+}
+#sidebar-overlay.active { display: block; }
+
+@media (max-width: 768px) {
+
+  /* Show hamburger */
+  .hamburger-btn { display: flex; align-items: center; }
+
+  /* Body scroll when app is open */
+  body { overflow: auto; }
+
+  /* App layout: stack vertically */
+  #app { flex-direction: column; height: auto; min-height: 100vh; }
+
+  /* Sidebar: off-screen by default, slides in */
+  .sidebar {
+    position: fixed; left: -260px; top: 0; bottom: 0;
+    z-index: 50; width: 240px; min-width: 240px;
+    transition: left .25s cubic-bezier(.4,0,.2,1);
+    height: 100vh;
+  }
+  .sidebar.open { left: 0; }
+
+  /* Main content full width */
+  .main-content { width: 100%; overflow-y: auto; }
+
+  /* Top bar */
+  .top-bar { padding: .75rem 1rem; }
+  .top-bar-title { font-size: 1rem; }
+  .top-bar-breadcrumb { display: none; }
+  .top-bar-date { display: none; }
+
+  /* View padding */
+  .view { padding: 1rem; }
+
+  /* KPI grid: 2 columns */
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .kpi-value { font-size: 1.4rem; }
+
+  /* Charts: single column */
+  .charts-row { grid-template-columns: 1fr; }
+  .game-charts-row { grid-template-columns: 1fr; }
+
+  /* Game stats: 2 columns */
+  .game-stats-grid { grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .game-stat-value { font-size: 1.1rem; }
+
+  /* Game HUD: wrap nicely */
+  .game-hud { padding: .9rem 1rem; gap: .75rem; }
+  .game-hud-gold { display: none; }
+  .game-xp-bar-wrap { max-width: 100%; }
+
+  /* Apartments grid: single column */
+  .apt-grid { grid-template-columns: 1fr; }
+
+  /* Tables: horizontal scroll */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { font-size: .75rem; min-width: 500px; }
+  thead th, tbody td { padding: .6rem .6rem; }
+
+  /* Modals: full width */
+  .modal-box { width: 96vw !important; padding: 1.2rem; border-radius: 18px; }
+  .modal-sm { width: 96vw !important; }
+
+  /* Forms */
+  .form-row { grid-template-columns: 1fr; }
+
+  /* Filter bar */
+  .filter-bar { border-radius: 16px; width: 100%; }
+
+  /* Buttons */
+  .btn { padding: .55rem 1rem; font-size: .8rem; }
+  .view-header { flex-direction: column; align-items: flex-start; gap: .6rem; }
+  .view-header > div { width: 100%; justify-content: flex-end; }
+
+  /* OT calculator */
+  .ot-calculator-wrap { grid-template-columns: 1fr; }
+
+  /* Login card */
+  .login-card { padding: 1.5rem 1.2rem; }
+}
