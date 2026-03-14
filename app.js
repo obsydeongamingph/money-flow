@@ -2187,7 +2187,7 @@ function renderLBSummary() {
       </div>
       <div class="lb-summary-divider"></div>
       <div class="lb-summary-row total">
-        <span>💵 Money Left Per Month</span>
+        <span>💵 Total Take Away</span>
         <span style="color:${remainingColor};font-size:1.4rem">QAR ${remaining.toLocaleString(undefined,{maximumFractionDigits:2})}</span>
       </div>
     </div>`;
