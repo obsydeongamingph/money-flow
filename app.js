@@ -3,7 +3,7 @@
 ═══════════════════════════════════════════════ */
 
 // ── VIEWS must be defined first — boot calls navigateTo which uses this ──
-const VIEWS = { dashboard: 'Dashboard', apartments: 'Apartments', tenants: 'Tenants', payments: 'Payment Log', roi: 'ROI Report', salary: 'Salary Management', ot: 'OT Calculator' };
+const VIEWS = { dashboard: 'Dashboard', apartments: 'Apartments', tenants: 'Tenants', payments: 'Payment Log', roi: 'ROI Report', salary: 'Salary Management', loans: 'Loans', ot: 'OT Calculator' };
 
 // ── INITIAL DATA ─────────────────────────────
 const SEED = {
@@ -145,6 +145,9 @@ function initDB() {
     if (changed) db('users', existingUsers);
   }
 
+  // Migrate: seed loans store if not yet present
+  if (db('init') && !db('loans')) db('loans', []);
+
   if (!db('init')) {
     db('users',         SEED.users);
     db('apartments',    SEED.apartments);
@@ -152,6 +155,7 @@ function initDB() {
     db('payments',      SEED.payments);
     db('mySalary', SEED.mySalary);
     db('otLogs', []);
+    db('loans', []);
     db('init', true);
   }
 }
@@ -367,7 +371,7 @@ function navigateTo(view) {
     const subs = { dashboard:'Overview', apartments:'Management', tenants:'Management', payments:'Management', roi:'Finance', salary:'Finance', ot:'Finance' };
     const sub = document.getElementById('page-title-sub');
     if (sub) sub.textContent = subs[view] || '';
-    const renders = { dashboard: renderDashboard, apartments: renderApartments, tenants: renderTenants, payments: renderPayments, roi: renderROI, salary: renderSalary, ot: () => { calcOT(); renderOTLogs(); } };
+    const renders = { dashboard: renderDashboard, apartments: renderApartments, tenants: renderTenants, payments: renderPayments, roi: renderROI, salary: renderSalary, loans: renderLoans, ot: () => { calcOT(); renderOTLogs(); } };
     if (renders[view]) renders[view]();
   } catch(err) { console.error('[navigateTo] error:', err); }
 }
@@ -1894,6 +1898,142 @@ async function refreshQARRate() {
   } catch (e) {
     console.warn('[MoneyFlow] Could not fetch QAR rate, using fallback ₱' + QAR_FALLBACK);
   }
+}
+
+// ── LOANS ─────────────────────────────────────
+function openLoanModal(id) {
+  document.getElementById('loan-id').value = '';
+  document.getElementById('form-loan').reset();
+  document.getElementById('modal-loan-title').textContent = 'Add Loan';
+  if (id) {
+    const r = getAll('loans').find(l => l.id === id);
+    if (!r) return;
+    document.getElementById('modal-loan-title').textContent = 'Edit Loan';
+    document.getElementById('loan-id').value      = r.id;
+    document.getElementById('loan-bank').value    = r.bank;
+    document.getElementById('loan-name').value    = r.name;
+    document.getElementById('loan-total').value   = r.total;
+    document.getElementById('loan-monthly').value = r.monthly;
+    document.getElementById('loan-paid').value    = r.paid || 0;
+    document.getElementById('loan-remaining').value = r.remaining;
+    document.getElementById('loan-start').value   = r.startDate || '';
+    document.getElementById('loan-end').value     = r.endDate || '';
+    document.getElementById('loan-status').value  = r.status;
+    document.getElementById('loan-notes').value   = r.notes || '';
+  }
+  openModal('modal-loan');
+}
+
+function calcLoanBalance() {
+  const total   = parseFloat(document.getElementById('loan-total').value)   || 0;
+  const paid    = parseFloat(document.getElementById('loan-paid').value)    || 0;
+  const remaining = Math.max(0, total - paid);
+  document.getElementById('loan-remaining').value = remaining;
+}
+
+document.getElementById('form-loan').addEventListener('submit', e => {
+  e.preventDefault();
+  const id      = document.getElementById('loan-id').value;
+  const total   = parseFloat(document.getElementById('loan-total').value)   || 0;
+  const paid    = parseFloat(document.getElementById('loan-paid').value)    || 0;
+  const monthly = parseFloat(document.getElementById('loan-monthly').value) || 0;
+  const remaining = parseFloat(document.getElementById('loan-remaining').value) || Math.max(0, total - paid);
+  const obj = {
+    bank:      document.getElementById('loan-bank').value,
+    name:      document.getElementById('loan-name').value.trim(),
+    total, monthly, paid, remaining,
+    startDate: document.getElementById('loan-start').value,
+    endDate:   document.getElementById('loan-end').value,
+    status:    document.getElementById('loan-status').value,
+    notes:     document.getElementById('loan-notes').value.trim(),
+  };
+  const all = getAll('loans');
+  if (id) {
+    const idx = all.findIndex(l => l.id === Number(id));
+    if (idx > -1) { all[idx] = { ...all[idx], ...obj }; }
+  } else {
+    obj.id = nextId('loans');
+    all.push(obj);
+  }
+  saveAll('loans', all);
+  closeModal('modal-loan');
+  renderLoans();
+});
+
+function renderLoans() {
+  const all = getAll('loans');
+  const active  = all.filter(l => l.status === 'active');
+  const totalMonthly = active.reduce((s, l) => s + (l.monthly || 0), 0);
+  const totalRemaining = active.reduce((s, l) => s + (l.remaining || 0), 0);
+  const totalBorrowed  = all.reduce((s, l) => s + (l.total || 0), 0);
+
+  document.getElementById('loan-kpis').innerHTML = `
+    <div class="kpi-card orange" data-icon="📅">
+      <div class="kpi-label">Monthly Deductions</div>
+      <div class="kpi-value">QAR ${totalMonthly.toLocaleString()}</div>
+      <div class="kpi-sub">Active loans this month</div>
+    </div>
+    <div class="kpi-card red" data-icon="💳">
+      <div class="kpi-label">Total Remaining</div>
+      <div class="kpi-value">QAR ${totalRemaining.toLocaleString()}</div>
+      <div class="kpi-sub">Balance across active loans</div>
+    </div>
+    <div class="kpi-card blue" data-icon="🏦">
+      <div class="kpi-label">Total Borrowed</div>
+      <div class="kpi-value">QAR ${totalBorrowed.toLocaleString()}</div>
+      <div class="kpi-sub">All-time loan amount</div>
+    </div>
+    <div class="kpi-card green" data-icon="✅">
+      <div class="kpi-label">Active Loans</div>
+      <div class="kpi-value">${active.length}</div>
+      <div class="kpi-sub">${all.filter(l => l.status === 'paid').length} fully paid</div>
+    </div>`;
+
+  const tbody = document.querySelector('#table-loans tbody');
+  tbody.innerHTML = '';
+  if (!all.length) {
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-muted)">No loans recorded.</td></tr>';
+    updateLoanBulkBtn(); return;
+  }
+  all.forEach(r => {
+    const monthsLeft = r.monthly > 0 ? Math.ceil(r.remaining / r.monthly) : '—';
+    const bankLabel = r.bank === 'CBQ' ? '🏦 CBQ' : r.bank === 'QNB' ? '🏦 QNB' : r.bank || '—';
+    const statusClass = r.status === 'paid' ? 'badge-paid' : r.status === 'paused' ? 'badge-pending' : 'badge-occupied';
+    tbody.innerHTML += `<tr>
+      <td><input type="checkbox" class="loan-row-cb" data-id="${r.id}" onchange="updateLoanBulkBtn()"/></td>
+      <td><strong>${bankLabel}</strong></td>
+      <td>${r.name}</td>
+      <td>QAR ${Number(r.total).toLocaleString()}</td>
+      <td><strong style="color:var(--danger)">QAR ${Number(r.monthly).toLocaleString()}</strong></td>
+      <td><strong>QAR ${Number(r.remaining).toLocaleString()}</strong></td>
+      <td>${r.startDate || '—'}</td>
+      <td>${r.endDate || '—'}</td>
+      <td>${monthsLeft}</td>
+      <td><span class="badge ${statusClass}">${r.status}</span></td>
+      <td style="max-width:140px;white-space:normal">${r.notes || '—'}</td>
+      <td>
+        <button class="btn-icon" onclick="openLoanModal(${r.id})" title="Edit">✏️</button>
+        <button class="btn-icon" onclick="deleteRecord('loans', ${r.id}, renderLoans)" title="Delete">🗑️</button>
+      </td>
+    </tr>`;
+  });
+  const selAll = document.getElementById('loan-select-all');
+  if (selAll) { selAll.checked = false; selAll.onchange = () => { document.querySelectorAll('.loan-row-cb').forEach(cb => cb.checked = selAll.checked); updateLoanBulkBtn(); }; }
+  updateLoanBulkBtn();
+}
+
+function updateLoanBulkBtn() {
+  const checked = document.querySelectorAll('.loan-row-cb:checked').length;
+  const btn = document.getElementById('loan-bulk-delete-btn');
+  if (btn) btn.classList.toggle('hidden', checked === 0);
+}
+
+function deleteSelectedLoans() {
+  const ids = [...document.querySelectorAll('.loan-row-cb:checked')].map(cb => Number(cb.dataset.id));
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} loan(s)?`)) return;
+  saveAll('loans', getAll('loans').filter(r => !ids.includes(r.id)));
+  renderLoans();
 }
 
 // ── UTILITY ──────────────────────────────────

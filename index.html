@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236c63ff'/%3E%3Ccircle cx='11' cy='16' r='7' stroke='white' stroke-width='2.2' fill='none'/%3E%3Cline x1='11' y1='11' x2='11' y2='21' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='8' y1='14' x2='14' y2='14' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='8' y1='18' x2='14' y2='18' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M20 13 L26 16 L20 19' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cline x1='20' y1='16' x2='26' y2='16' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900;1000&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=8"/>
+  <link rel="stylesheet" href="style.css?v=9"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
@@ -154,6 +154,7 @@
       <div class="nav-section-label">Finance</div>
       <li><a href="#" class="nav-link" data-view="roi" onclick="event.preventDefault();navigateTo('roi');closeSidebar()"><span class="nav-icon">📈</span> ROI Report</a></li>
       <li><a href="#" class="nav-link" data-view="salary" onclick="event.preventDefault();navigateTo('salary');closeSidebar()"><span class="nav-icon">💼</span> My Salary</a></li>
+      <li><a href="#" class="nav-link" data-view="loans" onclick="event.preventDefault();navigateTo('loans');closeSidebar()"><span class="nav-icon">🏦</span> Loans</a></li>
       <li><a href="#" class="nav-link" data-view="ot" onclick="event.preventDefault();navigateTo('ot');closeSidebar()"><span class="nav-icon">⏱️</span> OT Calculator</a></li>
     </ul>
     <div class="sidebar-footer">
@@ -404,6 +405,43 @@
         <div class="table-wrap">
           <table id="table-my-salary">
             <thead><tr><th><input type="checkbox" id="sal-select-all" title="Select all"/></th><th>Month / Year</th><th>Basic</th><th>Housing</th><th>Shift</th><th>Transport</th><th>Earnings Total</th><th>Absent Ded.</th><th>Leave Adv.</th><th>OT Ded.</th><th>Shift Ded.</th><th>Other Ded.</th><th>Net Take-Home</th><th>Date Received</th><th>Notes</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── LOANS ── -->
+    <section id="view-loans" class="view hidden">
+      <div class="view-header">
+        <h2>Loans</h2>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <button class="btn btn-danger btn-sm hidden" id="loan-bulk-delete-btn" onclick="deleteSelectedLoans()">🗑️ Delete Selected</button>
+          <button class="btn btn-primary" onclick="openLoanModal()">+ Add Loan</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="loan-kpis"></div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table id="table-loans">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="loan-select-all" title="Select all"/></th>
+                <th>Bank</th>
+                <th>Loan Name</th>
+                <th>Total Amount</th>
+                <th>Monthly Deduction</th>
+                <th>Remaining Balance</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Months Left</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
             <tbody></tbody>
           </table>
         </div>
@@ -902,6 +940,80 @@
   </div>
 </div>
 
-<script src="app.js?v=8"></script>
+<!-- ── LOAN MODAL ── -->
+<div id="modal-loan" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="modal-loan-title">Add Loan</span>
+      <button class="modal-close" onclick="closeModal('modal-loan')">✕</button>
+    </div>
+    <form id="form-loan">
+      <input type="hidden" id="loan-id"/>
+      <div class="form-row">
+        <div class="field">
+          <label>Bank</label>
+          <select id="loan-bank" required>
+            <option value="">Select Bank</option>
+            <option value="CBQ">🏦 CBQ — Commercial Bank Qatar</option>
+            <option value="QNB">🏦 QNB — Qatar National Bank</option>
+            <option value="Other">🏦 Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Loan Name / Purpose</label>
+          <input type="text" id="loan-name" placeholder="e.g. Personal Loan, Car Loan" required/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Total Loan Amount (QAR)</label>
+          <input type="number" id="loan-total" placeholder="0" min="0" required/>
+        </div>
+        <div class="field">
+          <label>Monthly Deduction (QAR)</label>
+          <input type="number" id="loan-monthly" placeholder="0" min="0" required oninput="calcLoanBalance()"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Amount Already Paid (QAR)</label>
+          <input type="number" id="loan-paid" placeholder="0" min="0" value="0" oninput="calcLoanBalance()"/>
+        </div>
+        <div class="field">
+          <label>Remaining Balance (QAR)</label>
+          <input type="number" id="loan-remaining" placeholder="Auto-calculated" min="0"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label>Start Date</label>
+          <input type="date" id="loan-start"/>
+        </div>
+        <div class="field">
+          <label>End Date</label>
+          <input type="date" id="loan-end"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="loan-status">
+          <option value="active">Active</option>
+          <option value="paid">Fully Paid</option>
+          <option value="paused">Paused</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <input type="text" id="loan-notes" placeholder="Optional notes"/>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-loan')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Loan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="app.js?v=9"></script>
 </body>
 </html>
