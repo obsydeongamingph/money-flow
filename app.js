@@ -339,18 +339,6 @@ document.getElementById('logout-btn').addEventListener('click', () => {
   showLogin();
 });
 
-// Boot: check for existing session
-(function boot() {
-  initDB();
-  const session = getSession();
-  if (session) {
-    const users = getAll('users');
-    const user = users.find(u => u.id === session.id);
-    if (user) { showApp(user); navigateTo('dashboard'); return; }
-  }
-  showLogin();
-})();
-
 // ── ROUTER ───────────────────────────────────
 const VIEWS = { dashboard: 'Dashboard', apartments: 'Apartments', tenants: 'Tenants', payments: 'Payment Log', roi: 'ROI Report', salary: 'Salary Management', ot: 'OT Calculator' };
 
@@ -1883,4 +1871,16 @@ refreshQARRate();
   const now = new Date();
   document.getElementById('ot-month').value = now.getMonth() + 1;
   document.getElementById('ot-year').value  = now.getFullYear();
+})();
+
+// Check session and boot app — must run last so all functions/constants are defined
+(function boot() {
+  initDB();
+  const session = getSession();
+  if (session) {
+    const users = getAll('users');
+    const user = users.find(u => u.id === session.id);
+    if (user) { showApp(user); navigateTo('dashboard'); return; }
+  }
+  showLogin();
 })();
