@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   Money Flow — App Logic v2
+   Money Flow — App Logic v3
 ═══════════════════════════════════════════════ */
 
 // ── VIEWS must be defined first — boot calls navigateTo which uses this ──
