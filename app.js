@@ -145,8 +145,9 @@ function initDB() {
     if (changed) db('users', existingUsers);
   }
 
-  // Migrate: seed loans store if not yet present
+  // Migrate: seed loans/bills stores if not yet present
   if (db('init') && !db('loans')) db('loans', []);
+  if (db('init') && !db('bills')) db('bills', []);
 
   if (!db('init')) {
     db('users',         SEED.users);
@@ -156,6 +157,7 @@ function initDB() {
     db('mySalary', SEED.mySalary);
     db('otLogs', []);
     db('loans', []);
+    db('bills', []);
     db('init', true);
   }
 }
@@ -2020,6 +2022,8 @@ function renderLoans() {
   const selAll = document.getElementById('loan-select-all');
   if (selAll) { selAll.checked = false; selAll.onchange = () => { document.querySelectorAll('.loan-row-cb').forEach(cb => cb.checked = selAll.checked); updateLoanBulkBtn(); }; }
   updateLoanBulkBtn();
+  renderBills();
+  renderLBSummary();
 }
 
 function updateLoanBulkBtn() {
@@ -2034,6 +2038,159 @@ function deleteSelectedLoans() {
   if (!confirm(`Delete ${ids.length} loan(s)?`)) return;
   saveAll('loans', getAll('loans').filter(r => !ids.includes(r.id)));
   renderLoans();
+}
+
+// ── BILLS ─────────────────────────────────────
+function openBillModal(id) {
+  document.getElementById('bill-id').value = '';
+  document.getElementById('form-bill').reset();
+  document.getElementById('modal-bill-title').textContent = 'Add Bill';
+  if (id) {
+    const r = getAll('bills').find(b => b.id === id);
+    if (!r) return;
+    document.getElementById('modal-bill-title').textContent = 'Edit Bill';
+    document.getElementById('bill-id').value       = r.id;
+    document.getElementById('bill-category').value = r.category;
+    document.getElementById('bill-name').value     = r.name;
+    document.getElementById('bill-amount').value   = r.amount;
+    document.getElementById('bill-frequency').value= r.frequency;
+    document.getElementById('bill-due-day').value  = r.dueDay || '';
+    document.getElementById('bill-status').value   = r.status;
+    document.getElementById('bill-notes').value    = r.notes || '';
+  }
+  openModal('modal-bill');
+}
+
+document.getElementById('form-bill').addEventListener('submit', e => {
+  e.preventDefault();
+  const id = document.getElementById('bill-id').value;
+  const obj = {
+    category:  document.getElementById('bill-category').value,
+    name:      document.getElementById('bill-name').value.trim(),
+    amount:    parseFloat(document.getElementById('bill-amount').value) || 0,
+    frequency: document.getElementById('bill-frequency').value,
+    dueDay:    document.getElementById('bill-due-day').value || '',
+    status:    document.getElementById('bill-status').value,
+    notes:     document.getElementById('bill-notes').value.trim(),
+  };
+  const all = getAll('bills');
+  if (id) {
+    const idx = all.findIndex(b => b.id === Number(id));
+    if (idx > -1) all[idx] = { ...all[idx], ...obj };
+  } else {
+    obj.id = nextId('bills');
+    all.push(obj);
+  }
+  saveAll('bills', all);
+  closeModal('modal-bill');
+  renderLoans();
+});
+
+function monthlyEquiv(amount, frequency) {
+  if (frequency === 'weekly')   return amount * 52 / 12;
+  if (frequency === 'annual')   return amount / 12;
+  if (frequency === 'one-time') return 0;
+  return amount; // monthly
+}
+
+function renderBills() {
+  const all = getAll('bills');
+  const active = all.filter(b => b.status === 'active');
+  const tbody = document.querySelector('#table-bills tbody');
+  tbody.innerHTML = '';
+  if (!all.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted)">No bills recorded.</td></tr>';
+    updateBillBulkBtn(); return;
+  }
+  const catIcons = { Utilities:'💡', Internet:'📶', Rent:'🏠', Subscription:'📺', Insurance:'🛡️', Groceries:'🛒', Transport:'🚗', 'Salary Loan':'💼', Other:'📋' };
+  all.forEach(r => {
+    const monthly = monthlyEquiv(r.amount, r.frequency);
+    const freqLabel = { monthly:'Monthly', weekly:'Weekly', annual:'Annual', 'one-time':'One-Time' }[r.frequency] || r.frequency;
+    const icon = catIcons[r.category] || '📋';
+    const statusClass = r.status === 'active' ? 'badge-occupied' : 'badge-vacant';
+    tbody.innerHTML += `<tr>
+      <td><input type="checkbox" class="bill-row-cb" data-id="${r.id}" onchange="updateBillBulkBtn()"/></td>
+      <td>${icon} ${r.category}</td>
+      <td>${r.name}</td>
+      <td>QAR ${Number(r.amount).toLocaleString()}</td>
+      <td>${freqLabel}</td>
+      <td><strong>QAR ${monthly.toLocaleString(undefined,{maximumFractionDigits:2})}</strong></td>
+      <td>${r.dueDay ? 'Day ' + r.dueDay : '—'}</td>
+      <td><span class="badge ${statusClass}">${r.status}</span></td>
+      <td style="max-width:140px;white-space:normal">${r.notes || '—'}</td>
+      <td>
+        <button class="btn-icon" onclick="openBillModal(${r.id})" title="Edit">✏️</button>
+        <button class="btn-icon" onclick="deleteRecord('bills', ${r.id}, renderLoans)" title="Delete">🗑️</button>
+      </td>
+    </tr>`;
+  });
+  const selAll = document.getElementById('bill-select-all');
+  if (selAll) { selAll.checked = false; selAll.onchange = () => { document.querySelectorAll('.bill-row-cb').forEach(cb => cb.checked = selAll.checked); updateBillBulkBtn(); }; }
+  updateBillBulkBtn();
+}
+
+function updateBillBulkBtn() {
+  const checked = document.querySelectorAll('.bill-row-cb:checked').length;
+  const btn = document.getElementById('bill-bulk-delete-btn');
+  if (btn) btn.classList.toggle('hidden', checked === 0);
+}
+
+function deleteSelectedBills() {
+  const ids = [...document.querySelectorAll('.bill-row-cb:checked')].map(cb => Number(cb.dataset.id));
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} bill(s)?`)) return;
+  saveAll('bills', getAll('bills').filter(r => !ids.includes(r.id)));
+  renderLoans();
+}
+
+// ── LOANS & BILLS TAB SWITCHER ─────────────────
+function switchLBTab(tab) {
+  document.getElementById('lb-panel-loans').classList.toggle('hidden', tab !== 'loans');
+  document.getElementById('lb-panel-bills').classList.toggle('hidden', tab !== 'bills');
+  document.getElementById('lb-tab-loans').classList.toggle('active', tab === 'loans');
+  document.getElementById('lb-tab-bills').classList.toggle('active', tab === 'bills');
+}
+
+// ── MONTHLY SUMMARY ────────────────────────────
+function renderLBSummary() {
+  // Latest salary
+  const salaries = getAll('mySalary').filter(s => s.status === 'received');
+  const latestSal = salaries.sort((a, b) => b.year - a.year || b.month - a.month)[0];
+  const monthlySalary = latestSal ? (latestSal.net || 0) : 0;
+
+  // Active loan deductions
+  const loans = getAll('loans').filter(l => l.status === 'active');
+  const totalLoanDed = loans.reduce((s, l) => s + (l.monthly || 0), 0);
+
+  // Active bill monthly equivalents
+  const bills = getAll('bills').filter(b => b.status === 'active');
+  const totalBills = bills.reduce((s, b) => s + monthlyEquiv(b.amount, b.frequency), 0);
+
+  const totalDeductions = totalLoanDed + totalBills;
+  const remaining = monthlySalary - totalDeductions;
+  const remainingColor = remaining >= 0 ? 'var(--success)' : 'var(--danger)';
+
+  document.getElementById('lb-summary').innerHTML = `
+    <div class="lb-summary-title">📊 Monthly Budget Summary</div>
+    <div class="lb-summary-grid">
+      <div class="lb-summary-row income">
+        <span>💰 Monthly Salary (latest received)</span>
+        <span>QAR ${monthlySalary.toLocaleString(undefined,{maximumFractionDigits:2})}</span>
+      </div>
+      <div class="lb-summary-row deduct">
+        <span>🏦 Bank Loan Deductions (${loans.length} active)</span>
+        <span>− QAR ${totalLoanDed.toLocaleString(undefined,{maximumFractionDigits:2})}</span>
+      </div>
+      <div class="lb-summary-row deduct">
+        <span>🧾 Bills &amp; Recurring (${bills.length} active)</span>
+        <span>− QAR ${totalBills.toLocaleString(undefined,{maximumFractionDigits:2})}</span>
+      </div>
+      <div class="lb-summary-divider"></div>
+      <div class="lb-summary-row total">
+        <span>💵 Money Left Per Month</span>
+        <span style="color:${remainingColor};font-size:1.4rem">QAR ${remaining.toLocaleString(undefined,{maximumFractionDigits:2})}</span>
+      </div>
+    </div>`;
 }
 
 // ── UTILITY ──────────────────────────────────
