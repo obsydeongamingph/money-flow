@@ -353,17 +353,22 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 const VIEWS = { dashboard: 'Dashboard', apartments: 'Apartments', tenants: 'Tenants', payments: 'Payment Log', roi: 'ROI Report', salary: 'Salary Management', ot: 'OT Calculator' };
 
 function navigateTo(view) {
-  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-  document.getElementById('view-' + view).classList.remove('hidden');
-  document.querySelector(`[data-view="${view}"]`).classList.add('active');
-  document.body.dataset.activeView = view;
-  document.getElementById('page-title').textContent = VIEWS[view];
-  const subs = { dashboard:'Overview', apartments:'Management', tenants:'Management', payments:'Management', roi:'Finance', salary:'Finance', ot:'Finance' };
-  const sub = document.getElementById('page-title-sub');
-  if (sub) sub.textContent = subs[view] || '';
-  const renders = { dashboard: renderDashboard, apartments: renderApartments, tenants: renderTenants, payments: renderPayments, roi: renderROI, salary: renderSalary, ot: () => { calcOT(); renderOTLogs(); } };
-  renders[view] && renders[view]();
+  try {
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    const viewEl = document.getElementById('view-' + view);
+    if (viewEl) viewEl.classList.remove('hidden');
+    const navEl = document.querySelector(`[data-view="${view}"]`);
+    if (navEl) navEl.classList.add('active');
+    document.body.dataset.activeView = view;
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle) pageTitle.textContent = VIEWS[view] || view;
+    const subs = { dashboard:'Overview', apartments:'Management', tenants:'Management', payments:'Management', roi:'Finance', salary:'Finance', ot:'Finance' };
+    const sub = document.getElementById('page-title-sub');
+    if (sub) sub.textContent = subs[view] || '';
+    const renders = { dashboard: renderDashboard, apartments: renderApartments, tenants: renderTenants, payments: renderPayments, roi: renderROI, salary: renderSalary, ot: () => { calcOT(); renderOTLogs(); } };
+    if (renders[view]) renders[view]();
+  } catch(err) { console.error('[navigateTo] error:', err); }
 }
 
 document.querySelectorAll('.nav-link').forEach(link => {

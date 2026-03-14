@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236c63ff'/%3E%3Ccircle cx='11' cy='16' r='7' stroke='white' stroke-width='2.2' fill='none'/%3E%3Cline x1='11' y1='11' x2='11' y2='21' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='8' y1='14' x2='14' y2='14' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='8' y1='18' x2='14' y2='18' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M20 13 L26 16 L20 19' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3Cline x1='20' y1='16' x2='26' y2='16' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900;1000&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=5"/>
+  <link rel="stylesheet" href="style.css?v=6"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/tesseract.js@4/dist/tesseract.min.js"></script>
@@ -146,15 +146,15 @@
     </div>
     <ul class="nav-links">
       <div class="nav-section-label">Overview</div>
-      <li><a href="#" class="nav-link active" data-view="dashboard" onclick="event.preventDefault();navigateTo('dashboard')"><span class="nav-icon">📊</span> Dashboard</a></li>
+      <li><a href="#" class="nav-link active" data-view="dashboard" onclick="event.preventDefault();navigateTo('dashboard');closeSidebar()"><span class="nav-icon">📊</span> Dashboard</a></li>
       <div class="nav-section-label">Management</div>
-      <li><a href="#" class="nav-link" data-view="apartments" onclick="event.preventDefault();navigateTo('apartments')"><span class="nav-icon">🏠</span> Apartments</a></li>
-      <li><a href="#" class="nav-link" data-view="tenants" onclick="event.preventDefault();navigateTo('tenants')"><span class="nav-icon">👥</span> Tenants</a></li>
-      <li><a href="#" class="nav-link" data-view="payments" onclick="event.preventDefault();navigateTo('payments')"><span class="nav-icon">💰</span> Payments</a></li>
+      <li><a href="#" class="nav-link" data-view="apartments" onclick="event.preventDefault();navigateTo('apartments');closeSidebar()"><span class="nav-icon">🏠</span> Apartments</a></li>
+      <li><a href="#" class="nav-link" data-view="tenants" onclick="event.preventDefault();navigateTo('tenants');closeSidebar()"><span class="nav-icon">👥</span> Tenants</a></li>
+      <li><a href="#" class="nav-link" data-view="payments" onclick="event.preventDefault();navigateTo('payments');closeSidebar()"><span class="nav-icon">💰</span> Payments</a></li>
       <div class="nav-section-label">Finance</div>
-      <li><a href="#" class="nav-link" data-view="roi" onclick="event.preventDefault();navigateTo('roi')"><span class="nav-icon">📈</span> ROI Report</a></li>
-      <li><a href="#" class="nav-link" data-view="salary" onclick="event.preventDefault();navigateTo('salary')"><span class="nav-icon">💼</span> My Salary</a></li>
-      <li><a href="#" class="nav-link" data-view="ot" onclick="event.preventDefault();navigateTo('ot')"><span class="nav-icon">⏱️</span> OT Calculator</a></li>
+      <li><a href="#" class="nav-link" data-view="roi" onclick="event.preventDefault();navigateTo('roi');closeSidebar()"><span class="nav-icon">📈</span> ROI Report</a></li>
+      <li><a href="#" class="nav-link" data-view="salary" onclick="event.preventDefault();navigateTo('salary');closeSidebar()"><span class="nav-icon">💼</span> My Salary</a></li>
+      <li><a href="#" class="nav-link" data-view="ot" onclick="event.preventDefault();navigateTo('ot');closeSidebar()"><span class="nav-icon">⏱️</span> OT Calculator</a></li>
     </ul>
     <div class="sidebar-footer">
       <div class="sidebar-user" id="open-profile-btn" title="Edit Profile" style="cursor:pointer">
@@ -901,6 +901,6 @@
   </div>
 </div>
 
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
