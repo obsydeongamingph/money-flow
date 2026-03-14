@@ -400,7 +400,9 @@ function renderDashboard() {
   document.getElementById('hud-xp-bar').style.width  = xpPct + '%';
   document.getElementById('hud-xp-label').textContent= fmtN(xpInLvl) + ' / ' + fmtN(XP_PER_LEVEL) + ' XP';
   document.getElementById('hud-gold').textContent    = '₱' + fmtN(totalCollect);
-  document.getElementById('today-date').textContent  = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  const el1 = document.getElementById('today-date'); if (el1) el1.textContent = dateStr;
+  const el2 = document.getElementById('hud-today-date'); if (el2) el2.textContent = dateStr;
 
   // ── Stat Cards ──
   const maxRent = apts.reduce((s, a) => s + (a.monthlyRent || 0), 0) || 1;

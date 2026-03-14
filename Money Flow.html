@@ -146,15 +146,15 @@
     </div>
     <ul class="nav-links">
       <div class="nav-section-label">Overview</div>
-      <li><a href="#" class="nav-link active" data-view="dashboard"><span class="nav-icon">📊</span> Dashboard</a></li>
+      <li><a href="#" class="nav-link active" data-view="dashboard" onclick="event.preventDefault();navigateTo('dashboard')"><span class="nav-icon">📊</span> Dashboard</a></li>
       <div class="nav-section-label">Management</div>
-      <li><a href="#" class="nav-link" data-view="apartments"><span class="nav-icon">🏠</span> Apartments</a></li>
-      <li><a href="#" class="nav-link" data-view="tenants"><span class="nav-icon">👥</span> Tenants</a></li>
-      <li><a href="#" class="nav-link" data-view="payments"><span class="nav-icon">💰</span> Payments</a></li>
+      <li><a href="#" class="nav-link" data-view="apartments" onclick="event.preventDefault();navigateTo('apartments')"><span class="nav-icon">🏠</span> Apartments</a></li>
+      <li><a href="#" class="nav-link" data-view="tenants" onclick="event.preventDefault();navigateTo('tenants')"><span class="nav-icon">👥</span> Tenants</a></li>
+      <li><a href="#" class="nav-link" data-view="payments" onclick="event.preventDefault();navigateTo('payments')"><span class="nav-icon">💰</span> Payments</a></li>
       <div class="nav-section-label">Finance</div>
-      <li><a href="#" class="nav-link" data-view="roi"><span class="nav-icon">📈</span> ROI Report</a></li>
-      <li><a href="#" class="nav-link" data-view="salary"><span class="nav-icon">💼</span> My Salary</a></li>
-      <li><a href="#" class="nav-link" data-view="ot"><span class="nav-icon">⏱️</span> OT Calculator</a></li>
+      <li><a href="#" class="nav-link" data-view="roi" onclick="event.preventDefault();navigateTo('roi')"><span class="nav-icon">📈</span> ROI Report</a></li>
+      <li><a href="#" class="nav-link" data-view="salary" onclick="event.preventDefault();navigateTo('salary')"><span class="nav-icon">💼</span> My Salary</a></li>
+      <li><a href="#" class="nav-link" data-view="ot" onclick="event.preventDefault();navigateTo('ot')"><span class="nav-icon">⏱️</span> OT Calculator</a></li>
     </ul>
     <div class="sidebar-footer">
       <div class="sidebar-user" id="open-profile-btn" title="Edit Profile" style="cursor:pointer">
@@ -203,7 +203,7 @@
             <div class="game-gold-value" id="hud-gold">₱0</div>
           </div>
         </div>
-        <div class="game-hud-date" id="today-date"></div>
+        <div class="game-hud-date" id="hud-today-date"></div>
       </div>
 
       <!-- ── STAT CARDS ── -->
