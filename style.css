@@ -1080,23 +1080,27 @@ tbody tr:nth-child(even) td { background:rgba(108,99,255,0.06); }
   /* Show hamburger */
   .hamburger-btn { display: flex; align-items: center; }
 
-  /* Body scroll when app is open */
-  body { overflow: auto; }
+  /* Body stays fixed height on mobile */
+  body { overflow: hidden; }
 
-  /* App layout: stack vertically */
-  #app { flex-direction: column; height: auto; min-height: 100vh; }
+  /* App layout: keep row, sidebar is fixed overlay so content fills full width */
+  #app { flex-direction: row; height: 100vh; }
 
-  /* Sidebar: off-screen by default, slides in */
+  /* Sidebar: off-screen by default, slides in as overlay */
   .sidebar {
-    position: fixed; left: -260px; top: 0; bottom: 0;
-    z-index: 50; width: 240px; min-width: 240px;
-    transition: left .25s cubic-bezier(.4,0,.2,1);
-    height: 100vh;
+    position: fixed !important; left: -270px !important; top: 0 !important; bottom: 0 !important;
+    z-index: 50 !important; width: 240px !important; min-width: 240px !important;
+    transition: left .25s cubic-bezier(.4,0,.2,1) !important;
+    height: 100vh !important;
   }
-  .sidebar.open { left: 0; }
+  .sidebar.open { left: 0 !important; }
 
-  /* Main content full width */
-  .main-content { width: 100%; overflow-y: auto; }
+  /* Main content must fill full screen width independently of sidebar */
+  .main-content {
+    width: 100% !important; max-width: 100% !important;
+    flex: 1 1 100% !important; overflow-y: auto;
+    margin-left: 0 !important;
+  }
 
   /* Top bar */
   .top-bar { padding: .75rem 1rem; }
