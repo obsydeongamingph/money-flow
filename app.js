@@ -2193,6 +2193,38 @@ function renderLBSummary() {
     </div>`;
 }
 
+// ── EXPORT / IMPORT ───────────────────────────
+function exportData() {
+  const keys = ['users','apartments','tenants','payments','mySalary','otLogs','loans','bills','qar_rate'];
+  const data = {};
+  keys.forEach(k => { const v = db(k); if (v !== null) data[k] = v; });
+  data._exported = new Date().toISOString();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `moneyflow-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      const keys = ['users','apartments','tenants','payments','mySalary','otLogs','loans','bills','qar_rate'];
+      keys.forEach(k => { if (data[k] !== undefined) db(k, data[k]); });
+      db('init', true);
+      alert('✅ Data restored successfully! Reloading...');
+      location.reload();
+    } catch { alert('❌ Invalid backup file.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
 // ── UTILITY ──────────────────────────────────
 function monthName(n) {
   return ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][n] || '?';
