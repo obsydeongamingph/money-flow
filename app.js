@@ -2,6 +2,9 @@
    Money Flow — App Logic v2
 ═══════════════════════════════════════════════ */
 
+// ── VIEWS must be defined first — boot calls navigateTo which uses this ──
+const VIEWS = { dashboard: 'Dashboard', apartments: 'Apartments', tenants: 'Tenants', payments: 'Payment Log', roi: 'ROI Report', salary: 'Salary Management', ot: 'OT Calculator' };
+
 // ── INITIAL DATA ─────────────────────────────
 const SEED = {
   users: [{ id: 1, username: 'melthirdyproperty', password: 'godisgreat', role: 'admin' }],
@@ -350,8 +353,6 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 });
 
 // ── ROUTER ───────────────────────────────────
-const VIEWS = { dashboard: 'Dashboard', apartments: 'Apartments', tenants: 'Tenants', payments: 'Payment Log', roi: 'ROI Report', salary: 'Salary Management', ot: 'OT Calculator' };
-
 function navigateTo(view) {
   try {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
