@@ -1028,8 +1028,9 @@ document.querySelectorAll('[onclick^="openModal"]').forEach(btn => {
   });
 });
 
-// Close modal on overlay click
+// Close modal on overlay click — except modal-apt (apartment form stays open)
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  if (overlay.id === 'modal-apt') return;
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.add('hidden'); });
 });
 
@@ -1300,9 +1301,10 @@ function renderSalary() {
   );
   const tbody = document.querySelector('#table-my-salary tbody');
   tbody.innerHTML = '';
-  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;color:var(--text-muted)">No salary records found.</td></tr>'; return; }
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="17" style="text-align:center;color:var(--text-muted)">No salary records found.</td></tr>'; updateSalBulkBtn(); return; }
   [...filtered].sort((a, b) => b.year - a.year || b.month - a.month).forEach(r => {
     tbody.innerHTML += `<tr>
+      <td><input type="checkbox" class="sal-row-cb" data-id="${r.id}" onchange="updateSalBulkBtn()"/></td>
       <td><strong>${monthName(r.month)} ${r.year}</strong></td>
       <td>QAR ${Number(r.basic||0).toLocaleString()}</td>
       <td>QAR ${Number(r.housing||0).toLocaleString()}</td>
@@ -1325,6 +1327,23 @@ function renderSalary() {
       </td>
     </tr>`;
   });
+  const selAll = document.getElementById('sal-select-all');
+  if (selAll) { selAll.checked = false; selAll.onchange = () => { document.querySelectorAll('.sal-row-cb').forEach(cb => cb.checked = selAll.checked); updateSalBulkBtn(); }; }
+  updateSalBulkBtn();
+}
+
+function updateSalBulkBtn() {
+  const checked = document.querySelectorAll('.sal-row-cb:checked').length;
+  const btn = document.getElementById('sal-bulk-delete-btn');
+  if (btn) btn.classList.toggle('hidden', checked === 0);
+}
+
+function deleteSelectedSalaries() {
+  const ids = [...document.querySelectorAll('.sal-row-cb:checked')].map(cb => Number(cb.dataset.id));
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} salary record(s)?`)) return;
+  saveAll('mySalary', getAll('mySalary').filter(r => !ids.includes(r.id)));
+  renderSalary();
 }
 
 function markSalaryReceived(id) {
